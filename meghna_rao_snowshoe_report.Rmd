@@ -1,0 +1,90 @@
+---
+title: "Exploratory Report on the weights of Juvenile Snowshoe Hares"
+author: "Meghna Rao"
+date: "11/7/2021"
+output: html_document
+code_folding: hide
+---
+
+```{r setup, include=FALSE, warning = FALSE, message = FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(here)
+library(lubridate) # mutate date columns
+```
+
+## Introduction 
+A 4 - 5 sentence "mini-introduction" to what this study is exploring, including basic background information about the subject, site and study (with citations as needed), and a brief overview of what is included in the exploratory report.
+
+**Data Citation:** [Kielland, K., F.S. Chapin, R.W. Ruess, and Bonanza Creek LTER. 2017. Snowshoe hare physical data in Bonanza Creek Experimental Forest: 1999-Present ver 22. Environmental Data Initiative](https://doi.org/10.6073/pasta/03dce4856d79b91557d8e6ce2cbcdc14)
+
+## Data and analyses
+
+A 3 - 4 sentence section in which you briefly describe the data, including citation & credit as needed, and provide an overview of the main analysis, statistical methods and tools used.
+
+## Juvenile hare initial investigation
+
+### Annual juvenile hare trap counts. 
+
+Count the total number of juvenile hare trappings during each year of the study, and create a finalized data visualization of the counts by year. Include a figure caption below the figure in your report. 
+
+```{r}
+bonanza_hares <- read.csv(here("data", "bonanza_hares.csv"))
+
+juvenile_hares <- bonanza_hares %>% 
+  filter(age == "j") %>%   # Filter for just the juveniles
+  mutate(date_new = mdy(date)) %>% # used lubridate library package to create a new column for the date
+  mutate(year_new = year(date_new)) # created a new column of just the years
+   
+```
+
+```{r}
+juvenile_hares_count <- juvenile_hares %>% 
+  count(year_new) # counted the number of juvenile bunnies per year
+
+juvenile_hares_summary <- juvenile_hares_count %>% 
+  summarize(mean_count = mean(n), # mean
+            median_count = median(n), # median
+            max_count = max(n), # max
+            min_count = min(n)) # min
+```
+●	What were the minimum and maximum counts of juvenile hare trappings?
+●	Mean or median annual number of juvenile hares trapped?
+The average number of juvenile hares trapped per year in this study was about `r round(juvenile_hares_summary$mean_count, 0)` and the median number of juvenile hares trapped per year was `r round(juvenile_hares_summary$median_count, 0)`. The greatest number of juvenile hares trapped was `r round(juvenile_hares_summary$max_count, 0)` in the first year of the study in 1999. There were no juvenile hares trapped in 2002 and 2009. 
+●	General/notable trends?
+●	These are absolute counts, but this count is also impacted by effort (e.g. the number of days and number of traps in the study each year). What would you suggest be done moving forward (you are not expected to actually do this) to standardize the juvenile hare population in future analyses?
+
+```{r, fig.cap= "Figure 1: Graph showing the total number of juvenile hares trapped between 1999 and 2012 in the Bonanza Creek Experimental Forest, Tanana Valley, Alaska. Data: Kielland et al. (2017).}
+ggplot(data = juvenile_hares_count, aes(x = year_new, y = n)) +
+  geom_col(fill = "coral", width = 0.8) +
+  labs(x = "Year", y = "Total Juveniles Trapped", title = "Figure 1: Total Juvenile Hares Trapped by Year") + # add labels to graph
+  scale_x_discrete(limit = c(1999:2012)) + # manually putting ticks for x axis
+  theme_minimal() +
+    theme(plot.title = element_text(face = "bold", hjust = 0.5)) # center the title and bold it
+```
+### Visualizing Juvenile Hare Weights by Sex and Site
+
+We are showing summary statistics of 
+```{r}
+juvenile_hares_sex_site <- juvenile_hares %>% 
+  group_by(sex, grid) %>% # group by sex, and grid
+  summarize(mean_weight = mean(weight, na.rm = TRUE)) %>% # average weights by sex and grid
+  mutate(sex = case_when( # changing names of sex
+    sex == "f" ~ "Female",
+    sex == "m" ~ "Male",)) %>% 
+  mutate(grid = case_when( # Rename sites in dataset so that the full name shows up in visualizations
+    grid == "bonbs" ~ "Bonanza Black Spruce", 
+    grid == "bonmat" ~ "Bonanza Mature",
+    grid == "bonrip" ~ "Bonanza Riparian"))
+```
+
+```{r, fig.cap= "Figure 2: Graph showing summary statistics on the average weight of male and female juvenile hares trapped between 1999 and 2012 in mature lowland black spruce (Bonanza Black Spruce), mature black spruce and other strands (Bonanza Mature) and Bonanza Riparian in the Bonanza Creek Experimental Forest, Tanana Valley, Alaska. Data: Kielland et al. (2017). "NA" was used when sex was not provided}
+ggplot(data = juvenile_hares_sex_site, aes(x = sex, y = mean_weight, fill = sex)) +
+  geom_col() + # column graph
+  facet_wrap(~ grid) + # facet wrap by grid for 
+  labs(x = "Sex", y = "Average Weight (g)", title = "Figure 2: Juvenile Hare Weights by Sex and Location") +
+  theme_minimal() + 
+    theme(plot.title = element_text(face = "bold", hjust = 0.5), 
+          legend.position = "None") # center the title and bold it
+```
+
