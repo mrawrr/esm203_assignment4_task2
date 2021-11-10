@@ -207,6 +207,7 @@ different as the sample means found in this study by random chance is 0.07%.
 Next steps
 
 - Compare the effect that location has on juvenile hare weight
+- Determine a better statistical analysis to assess the relationship betwwen juvenile hare hindfood length and weight
 
 # Citations
 
